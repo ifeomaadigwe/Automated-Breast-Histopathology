@@ -1,0 +1,123 @@
+
+# Case Study: Automated Breast Histopathology Slide Triage  
+**Reducing Pathologist Backlog with Deep Learning**
+
+---
+## Company Overview
+
+**Histocare Diagnostics Ltd.** is a Cambridge-based digital pathology provider founded in 2010 by histopathologists and AI engineers from the University of Cambridge. Now a regional leader in cloud-based slide management and diagnostic support, Histocare is tackling the growing challenge of breast cancer screening overload.
+
+---
+## Business Challenge
+
+With breast cancer screening volumes rising over **20% annually**, the UK’s pathologist workforce has struggled to keep pace. Histocare’s average turnaround time (TAT) for routine breast biopsy slides has doubled—from **5 days in 2020 to 10 days in 2024**.
+
+---
+## Project Rationale
+
+This project leverages **deep learning** to triage histopathology slides into:
+- **Likely Benign**: Can be deprioritized or auto-archived
+- **Requires Pathologist Review**: Flagged for expert attention
+
+By automating this first-pass classification, we aim to **reduce workload**, **accelerate diagnosis**, and **optimize expert time**.
+
+---
+## Strategic Goals
+
+1. **Reduce Turnaround Time**  
+   Prioritize malignant cases for faster treatment initiation.
+
+2. **Optimize Expert Time**  
+   Free pathologists from reviewing low-risk benign slides.
+
+3. **Lower Operational Costs**  
+   Reduce slide-processing and review overhead.
+
+4. **Ensure NHS Compliance**  
+   Meet <7-day TAT targets to avoid penalties.
+
+5. **Strengthen Market Position**  
+   Establish Histocare as a leader in AI-enabled diagnostics.
+
+---
+
+## Project Structure
+
+```
+Breast_Histopathology_Prediction/
+│
+├── data/                     # Raw and processed image data
+├── artifacts/                # Saved models, plots, metrics
+├── src/
+│   ├── config.py             # Centralized hyperparameters and paths
+│   ├── split_data.py         # Train/test split logic
+│   ├── imbalance.py          # Class distribution handling
+│   ├── model_training.py     # Model training and evaluation
+│   ├── mlflow_tracking.py    # Experiment logging
+│   ├── app.py                # Streamlit dashboard (optional)
+│   ├── main.py               # FastAPI deployment
+│   └── gradio.py             # Gradio interface (future use)
+│
+├── requirements.txt          # Project dependencies
+├── .gitignore                # Clean repo management
+└── README.md                 # Project overview
+```
+
+---
+## Data Source
+
+I used the **Breast Histopathology Images (BreakHis)** dataset from Kaggel, which contains thousands of microscopic images labeled as benign or malignant. Images were resized, normalized, and split into training and test sets using stratified sampling.
+
+---
+## Data Pipeline
+
+1. **Data Ingestion**  
+   Images loaded and indexed with labels.
+
+2. **Class Imbalance Handling**  
+   Weighted sampling to balance benign/malignant cases.
+
+3. **Preprocessing**  
+   Resizing to 224×224, normalization, and tensor conversion.
+
+4. **Model Training**  
+   Fine-tuned `ResNet18` pretrained on ImageNet.
+
+5. **Evaluation**  
+   Metrics calculated: Accuracy, Precision, Recall, F1, ROC-AUC  
+   Confusion matrix and metric plots saved to `artifacts/`.
+
+6. **Model Saving**  
+   Trained weights saved as `.pth` for reuse and deployment.
+
+---
+## Experiment Tracking
+
+We used **MLflow** to log:
+- Hyperparameters (batch size, learning rate, epochs)
+- Evaluation metrics
+- Model artifacts and plots
+
+This enables easy comparison across model versions and training runs.
+
+---
+## Visualization & Deployment
+
+### ✅ Streamlit Dashboard (`app.py`)
+- Upload image → Get prediction + confidence
+- View evaluation metrics and confusion matrix (collapsible)
+
+### ✅ FastAPI + Swagger UI (`main.py`)
+- `/predict` endpoint for image classification
+- Auto-generated docs at `/docs` for testing and integration
+
+---
+
+##  What We’re Achieving
+
+By automating slide triage, we’re:
+- **Reducing benign-case reviews by up to 60%**
+- **Accelerating malignant case detection**
+- **Helping Histocare meet NHS compliance targets**
+- **Positioning Histocare as a pioneer in AI-powered pathology**
+

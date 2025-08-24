@@ -1,0 +1,65 @@
+# Python cache and compiled files
+*.pyc
+*.pyd
+*.pyo
+__pycache__/
+
+# VS Code and IDE settings
+.vscode/
+.idea/
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# Jupyter and notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Model artifacts and logs
+artifacts/*.pth
+artifacts/*.pt
+artifacts/*.onnx
+artifacts/*.h5
+artifacts/*.joblib
+artifacts/*.pkl
+artifacts/*.log
+
+# Large image/data files
+artifacts/*.png
+artifacts/*.jpg
+artifacts/*.jpeg
+artifacts/*.tiff
+artifacts/*.bmp
+artifacts/*.gif
+data/
+datasets/
+images/
+raw_data/
+*.zip
+*.tar.gz
+
+# MLflow logs and runs
+mlruns/
+mlartifacts/
+
+# Streamlit and Gradio cache
+.streamlit/
+.gradio/
+
+# FastAPI static/media files
+static/
+media/
+
+# Secrets and config
+config.yaml
+.env
+
+# Misc
+*.sqlite3
+*.db
