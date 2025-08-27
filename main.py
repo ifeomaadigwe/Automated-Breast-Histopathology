@@ -3,6 +3,7 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from typing import List
 import torch
 from torchvision import models, transforms
 from PIL import Image
@@ -12,7 +13,7 @@ from pathlib import Path
 # Initialize FastAPI app
 app = FastAPI(
     title="Breast Histopathology Classifier",
-    description="Upload histopathology images to predict benign or malignant tumors.",
+    description="Upload up to 10 histopathology images to predict benign or malignant tumors.",
     version="1.0.0"
 )
 
@@ -44,32 +45,38 @@ transform = transforms.Compose([
 def read_root():
     return {"message": "Welcome to the Breast Histopathology Classifier API. Use /docs to test the prediction endpoint."}
 
-# Prediction endpoint
+# Batch prediction endpoint
 @app.post("/predict", tags=["Classification"])
-async def predict(image: UploadFile = File(...)):
+async def predict(images: List[UploadFile] = File(...)):
     """
-    Predict whether a histopathology image is benign or malignant.
-    - **image**: Upload a PNG or JPG image
+    Predict whether each histopathology image is benign or malignant.
+    - **images**: Upload up to 10 PNG or JPG images
     """
-    contents = await image.read()
-    img = Image.open(io.BytesIO(contents)).convert("RGB")
-    input_tensor = transform(img).unsqueeze(0)
+    results = []
 
-    with torch.no_grad():
-        output = model(input_tensor)
-        probs = torch.softmax(output, dim=1)
-        pred = torch.argmax(probs, dim=1).item()
-        confidence = probs[0][pred].item()
+    for image_file in images[:10]:  # Limit to 10
+        contents = await image_file.read()
+        img = Image.open(io.BytesIO(contents)).convert("RGB")
+        input_tensor = transform(img).unsqueeze(0)
 
-    label = "malignant" if pred == 1 else "benign"
-    triage = (
-        "Likely benign — Non-cancerous tissue detected."
-        if label == "benign"
-        else "Requires pathologist review — Cancerous tissue detected."
-    )
+        with torch.no_grad():
+            output = model(input_tensor)
+            probs = torch.softmax(output, dim=1)
+            pred = torch.argmax(probs, dim=1).item()
+            confidence = probs[0][pred].item()
 
-    return JSONResponse(content={
-        "prediction": label,
-        "confidence": round(confidence, 4),
-        "triage_recommendation": triage
-    })
+        label = "malignant" if pred == 1 else "benign"
+        triage = (
+            "Likely benign — Non-cancerous tissue detected."
+            if label == "benign"
+            else "Requires pathologist review — Cancerous tissue detected."
+        )
+
+        results.append({
+            "filename": image_file.filename,
+            "prediction": label,
+            "confidence": round(confidence, 4),
+            "triage_recommendation": triage
+        })
+
+    return JSONResponse(content={"results": results})

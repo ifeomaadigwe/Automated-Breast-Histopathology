@@ -4,9 +4,10 @@ import streamlit as st
 import torch
 from torchvision import models, transforms
 from PIL import Image
-import matplotlib.pyplot as plt
-import seaborn as sns
 from pathlib import Path
+
+# ✅ Streamlit UI configuration
+st.set_page_config(page_title="Histopathology Slide Triage Dashboard", layout="wide")
 
 # Load trained model
 model_path = Path("artifacts/resnet18_breast_histology.pth")
@@ -23,49 +24,58 @@ transform = transforms.Compose([
 ])
 
 # Sidebar
-st.sidebar.title(" Breast Histopathology Classifier")
-st.sidebar.write("Upload a histopathology image to predict whether it's benign or malignant.")
+st.sidebar.title("🧬 Breast Histopathology Classifier")
+st.sidebar.write("Upload up to 10 histopathology images to predict benign or malignant tumors.")
 
-st.sidebar.markdown("### 🧬 What Do These Terms Mean?")
+st.sidebar.markdown("### 🔍 What Do These Terms Mean?")
 st.sidebar.markdown("""
-- **Benign**: Non-cancerous tissue. 
-- **Malignant**: Cancerous tissue.
+- **Benign**: Non-cancerous tissue. These cells do not invade nearby tissues or spread to other parts of the body.
+- **Malignant**: Cancerous tissue. These cells can grow aggressively, invade surrounding areas, and may spread to other organs.
 """)
 
-
 # Main UI
-st.title("🔬 Histopathology Image Classification Dashboard")
-uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
+st.title("🔬 Histopathology Slide Triage Dashboard")
+uploaded_files = st.file_uploader("Upload up to 10 images", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
 
-if uploaded_file:
-    image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+if uploaded_files:
+    benign_count = 0
+    malignant_count = 0
 
-    input_tensor = transform(image).unsqueeze(0)
-    with torch.no_grad():
-        output = model(input_tensor)
-        probs = torch.softmax(output, dim=1)
-        pred = torch.argmax(probs, dim=1).item()
-        confidence = probs[0][pred].item()
+    for uploaded_file in uploaded_files[:10]:  # Limit to 10
+        image = Image.open(uploaded_file).convert("RGB")
+        st.image(image, caption=f"Uploaded: {uploaded_file.name}", use_container_width=True)
 
-    label = "Malignant" if pred == 1 else "Benign"
-    st.subheader(f"🩺 Prediction: **{label}**")
-    st.write(f"Confidence: **{confidence:.2%}**")
+        input_tensor = transform(image).unsqueeze(0)
+        with torch.no_grad():
+            output = model(input_tensor)
+            probs = torch.softmax(output, dim=1)
+            pred = torch.argmax(probs, dim=1).item()
+            confidence = probs[0][pred].item()
 
-    # Triage Recommendation
-    if label == "Benign":
-        st.success("✅ Likely benign — Non-cancerous tissue detected.")
-    else:
-        st.warning("⚠️ Requires pathologist review — Cancerous tissue detected.")
+        label = "Malignant" if pred == 1 else "Benign"
+        triage = (
+            "✅ Likely benign — Non-cancerous tissue detected."
+            if label == "Benign"
+            else "⚠️ Requires pathologist review — Cancerous tissue detected."
+        )
+
+        if label == "Benign":
+            benign_count += 1
+            st.success(f"🩺 Prediction: **{label}** — Confidence: **{confidence:.2%}**")
+            st.write(triage)
+        else:
+            malignant_count += 1
+            st.warning(f"🩺 Prediction: **{label}** — Confidence: **{confidence:.2%}**")
+            st.write(triage)
+
+        st.markdown("---")
+
+    # Summary
+    st.subheader("📊 Batch Summary")
+    st.write(f"Total slides reviewed: **{len(uploaded_files[:10])}**")
+    st.write(f"✅ Benign cases: **{benign_count}**")
+    st.write(f"⚠️ Malignant cases: **{malignant_count}**")
     st.info("ℹ️ This is a research prototype and not for clinical use.")
-
-# Collapsible Confusion Matrix
-with st.expander("🔍 Show Confusion Matrix"):
-    cm_path = Path("artifacts/confusion_matrix.png")
-    if cm_path.exists():
-        st.image(str(cm_path), caption="Confusion Matrix", use_column_width=True)
-    else:
-        st.warning("Confusion matrix not found.")
 
 # Footer
 st.markdown("---")
